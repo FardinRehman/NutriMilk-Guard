@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: nutri-milk-guard
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn -w 1 --threads 8 -b 0.0.0.0:$PORT run:app
+    envVars:
+      - key: FLASK_ENV
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: FIREBASE_PROJECT_ID
+        value: milk-monitoring-4cb97
+      - key: FIREBASE_DATABASE_URL
+        value: https://milk-monitoring-4cb97-default-rtdb.asia-southeast1.firebasedatabase.app/
+      - key: DEFAULT_DB_PATH
+        value: milk_monitor/current
+      - key: UPDATE_POLL_INTERVAL
+        value: "3.0"
+      - key: STALE_DATA_TIMEOUT
+        value: "45"

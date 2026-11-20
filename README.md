@@ -171,19 +171,39 @@ python -m pytest -v
 
 ---
 
-## 7. Production Deployment & WSGI Guide
+## 7. Cloud Deployment & Live Hosting (Render / Railway / WSGI)
 
-For production deployments on a Linux or Windows Server:
-1. Do not use Flask's built-in development server (`run.py` default).
-2. Use **Waitress** (for Windows) or **Gunicorn** (for Linux) with multi-threading enabled to support concurrent Server-Sent Events (SSE) connections:
+> **Important Note on GitHub Pages vs. Cloud Hosting:**  
+> GitHub Pages only supports static front-end assets (HTML/CSS/JS) and **cannot** execute dynamic Python/Flask runtimes or background Firebase sync threads. To make Nutri Milk Guard live with a public URL on the web, use a cloud container platform such as **Render** (free) or **Railway**.
 
-### Windows Production (Waitress)
+### Option A: Free Deployment on Render (Recommended)
+
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/FardinRehman/NutriMilk-Guard)
+
+1. Sign up or log into [Render.com](https://render.com/) (using your GitHub account).
+2. Click **New +** &rarr; **Web Service**.
+3. Connect your repository: `FardinRehman/NutriMilk-Guard`.
+4. Configure the settings (or Render will automatically detect `render.yaml`):
+   - **Runtime:** `Python 3`
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn -w 1 --threads 8 -b 0.0.0.0:$PORT run:app`
+   - **Plan:** `Free`
+5. In **Environment Variables**, add:
+   - `FLASK_ENV`: `production`
+   - `SECRET_KEY`: *(Generate or enter a random secure string)*
+   - `FIREBASE_PROJECT_ID`: `milk-monitoring-4cb97`
+   - `FIREBASE_DATABASE_URL`: `https://milk-monitoring-4cb97-default-rtdb.asia-southeast1.firebasedatabase.app/`
+6. Click **Deploy Web Service**. Render will build and deploy your app. Your live dashboard will be accessible via your free Render URL (e.g., `https://nutrimilk-guard.onrender.com`).
+
+---
+
+### Option B: Windows Production (Waitress)
 ```powershell
 pip install waitress
 waitress-serve --listen=0.0.0.0:5000 run:app
 ```
 
-### Linux Production (Gunicorn)
+### Option C: Linux Production (Gunicorn)
 ```bash
 pip install gunicorn
 gunicorn -w 1 --threads 8 -b 0.0.0.0:5000 run:app
