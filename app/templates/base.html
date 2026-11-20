@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Nutri Milk Guard - IoT Milk Quality Monitoring{% endblock %}</title>
+  
+  <meta name="description" content="Nutri Milk Guard - An advanced IoT-based real-time milk quality monitoring platform for VTU Engineering project. Tracks temperature, pH, and volume from ESP32 with Firebase integration.">
+  <meta name="theme-color" content="#0284C7">
+
+  <!-- Favicon / App Icon -->
+  <link rel="icon" type="image/svg+xml" href="{{ url_for('static', filename='images/logo.svg') }}">
+
+  <!-- Core Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+
+  <!-- Chart.js Library -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <div class="app-container">
+    <!-- Desktop & Mobile Sidebar Navigation -->
+    <aside class="sidebar" id="app-sidebar">
+      <div class="sidebar-brand">
+        <img src="{{ url_for('static', filename='images/logo.svg') }}" alt="Nutri Milk Guard Logo" class="brand-icon">
+        <div>
+          <div class="brand-title">{{ APP_NAME }}</div>
+          <div class="brand-subtitle">{{ APP_SUBTITLE }}</div>
+        </div>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="{{ url_for('dashboard.index') }}" class="nav-item {% if active_page == 'dashboard' %}active{% endif %}" id="nav-dashboard">
+          <i data-lucide="layout-dashboard"></i>
+          <span>Dashboard</span>
+        </a>
+
+        <a href="{{ url_for('history.index') }}" class="nav-item {% if active_page == 'history' %}active{% endif %}" id="nav-history">
+          <i data-lucide="history"></i>
+          <span>Sensor History</span>
+        </a>
+
+        <a href="{{ url_for('alerts.index') }}" class="nav-item {% if active_page == 'alerts' %}active{% endif %}" id="nav-alerts">
+          <i data-lucide="alert-triangle"></i>
+          <span>Alerts</span>
+          <span class="nav-badge" id="nav-alert-count" style="{% if not active_alert_count %}display: none;{% endif %}">
+            {{ active_alert_count or 0 }}
+          </span>
+        </a>
+
+        <a href="{{ url_for('settings.index') }}" class="nav-item {% if active_page == 'settings' %}active{% endif %}" id="nav-settings">
+          <i data-lucide="sliders"></i>
+          <span>Settings</span>
+        </a>
+
+        <a href="#system-info-modal" class="nav-item" id="nav-system-info" onclick="document.getElementById('sys-modal').style.display='flex'">
+          <i data-lucide="info"></i>
+          <span>System Information</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="hardware-pill">
+          <span class="hardware-dot"></span>
+          <span>ESP32 Hardware Linked</span>
+        </div>
+        <div style="font-size: 0.7rem; color: var(--text-light); margin-top: 0.25rem;">
+          {{ PROJECT_INSTITUTION }}
+        </div>
+      </div>
+    </aside>
+
+    <!-- Main Wrapper -->
+    <div class="main-wrapper">
+      <!-- Top Header Bar -->
+      <header class="top-header">
+        <div class="header-left">
+          <button class="mobile-menu-btn" id="mobile-menu-toggle" aria-label="Toggle navigation menu">
+            <i data-lucide="menu"></i>
+          </button>
+          <h1 class="page-title">{% block page_heading %}Dashboard Overview{% endblock %}</h1>
+        </div>
+
+        <div class="header-right">
+          <!-- Live Clock -->
+          <div class="live-clock mono" id="live-clock">--:--:--</div>
+
+          <!-- Firebase Connection Status Badge -->
+          <div class="status-pill {% if conn_info and conn_info.is_connected %}{% if conn_info.is_stale %}stale{% else %}connected{% endif %}{% else %}disconnected{% endif %}" id="connection-status-pill">
+            <span class="status-dot"></span>
+            <span id="connection-status-text">
+              {% if conn_info and conn_info.is_connected %}
+                {% if conn_info.is_stale %}Stale Data (Sensor Idle){% else %}Live Firebase Connected{% endif %}
+              {% else %}
+                Firebase Disconnected
+              {% endif %}
+            </span>
+          </div>
+
+          <!-- Reconnect Action -->
+          <button class="btn btn-outline btn-sm" id="reconnect-btn" title="Refresh Firebase telemetry stream">
+            <i data-lucide="refresh-cw" style="width: 14px; height: 14px;"></i>
+            <span>Sync</span>
+          </button>
+        </div>
+      </header>
+
+      <!-- Page Body -->
+      <main class="page-content">
+        <!-- Flash Messages -->
+        <div class="flash-container">
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              {% for category, message in messages %}
+                <div class="flash-message flash-{{ category }}">
+                  <span>{{ message }}</span>
+                </div>
+              {% endfor %}
+            {% endif %}
+          {% endwith %}
+        </div>
+
+        {% block content %}{% endblock %}
+      </main>
+    </div>
+  </div>
+
+  <!-- System Information Modal -->
+  <div id="sys-modal" style="display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6); z-index: 200; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: #FFFFFF; border-radius: 16px; width: 90%; max-width: 580px; padding: 2rem; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem;">
+        <h3 style="font-size: 1.2rem; font-weight: 700; color: #0F172A; display: flex; align-items: center; gap: 0.5rem;">
+          <i data-lucide="cpu" style="color: #0284C7;"></i>
+          Nutri Milk Guard - System Information
+        </h3>
+        <button onclick="document.getElementById('sys-modal').style.display='none'" style="background: none; border: none; font-size: 1.25rem; cursor: pointer; color: #64748B;">&times;</button>
+      </div>
+
+      <div style="font-size: 0.88rem; color: #334155; line-height: 1.6; display: flex; flex-direction: column; gap: 0.75rem;">
+        <div><strong>Project Title:</strong> Nutri Milk Guard — IoT Milk Quality Monitoring</div>
+        <div><strong>Academic Specification:</strong> VTU Final Year Engineering Demonstration</div>
+        <div><strong>Microcontroller:</strong> ESP32 WiFi SoC</div>
+        <div><strong>Sensors:</strong> Analog Milk pH Probe, Digital DS18B20 Temperature Sensor, Volume Sensor</div>
+        <div><strong>Firebase Project ID:</strong> <span class="mono">{{ FIREBASE_PROJECT_ID }}</span></div>
+        <div><strong>Active Database Path:</strong> <span class="mono">{{ conn_info.target_path if conn_info else 'milk_monitor/current' }}</span></div>
+        <div><strong>Data Stream Mode:</strong> {{ conn_info.mode if conn_info else 'Server-Sent Events (SSE)' }}</div>
+        <div><strong>Quality Standards Reference:</strong> FSSAI & ISO Bovine Milk Baseline (Fresh pH 6.50–6.80)</div>
+      </div>
+
+      <div style="margin-top: 1.5rem; text-align: right;">
+        <button class="btn btn-primary btn-sm" onclick="document.getElementById('sys-modal').style.display='none'">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Global Scripts -->
+  <script src="{{ url_for('static', filename='js/live_updates.js') }}"></script>
+  <script>
+    // Initialize Lucide icons
+    if (window.lucide) {
+      lucide.createIcons();
+    }
+  </script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

@@ -1,0 +1,197 @@
+{% extends "base.html" %}
+
+{% block title %}Settings | Nutri Milk Guard{% endblock %}
+{% block page_heading %}System & Threshold Settings{% endblock %}
+
+{% block content %}
+<div class="settings-grid">
+  <!-- Thresholds Configuration Form -->
+  <div class="form-card">
+    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i data-lucide="sliders" style="color: var(--brand-primary); width: 20px; height: 20px;"></i>
+      Quality Threshold Configuration
+    </h3>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+      Configure baseline quality rules based on your milk type (cow/buffalo) and project testing criteria.
+      These thresholds are applied server-side and protect the ESP32 hardware memory from being overwritten.
+    </p>
+
+    <form action="{{ url_for('settings.index') }}" method="POST">
+      <input type="hidden" name="action" value="save_thresholds">
+
+      <!-- Milk Temperature (°C) -->
+      <h4 style="font-size: 0.92rem; font-weight: 600; color: #0284C7; margin-bottom: 0.75rem;">
+        Milk Temperature (°C)
+      </h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Optimal Chilled Max (°C)</label>
+          <input type="number" step="0.1" name="temp_optimal_max" class="form-control mono" value="{{ thresholds.temperature_C.optimal_max }}">
+          <div class="form-hint">Standard cold storage (default: 10.0°C)</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Warning Max (°C)</label>
+          <input type="number" step="0.1" name="temp_warning_max" class="form-control mono" value="{{ thresholds.temperature_C.warning_max }}">
+          <div class="form-hint">Ambient temperature collection ceiling (default: 25.0°C)</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Critical Spoilage Max (°C)</label>
+          <input type="number" step="0.1" name="temp_critical_max" class="form-control mono" value="{{ thresholds.temperature_C.critical_max }}">
+          <div class="form-hint">Rapid microbial multiplication (default: 35.0°C)</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Critical Min / Freezing (°C)</label>
+          <input type="number" step="0.1" name="temp_critical_min" class="form-control mono" value="{{ thresholds.temperature_C.critical_min }}">
+          <div class="form-hint">Emulsion breakdown point (default: -0.5°C)</div>
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin: 1.25rem 0;">
+
+      <!-- Milk pH Scale -->
+      <h4 style="font-size: 0.92rem; font-weight: 600; color: #16A34A; margin-bottom: 0.75rem;">
+        Milk pH Level (0 - 14 Scale)
+      </h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Optimal Fresh Min (pH)</label>
+          <input type="number" step="0.05" name="ph_optimal_min" class="form-control mono" value="{{ thresholds.pH.optimal_min }}">
+          <div class="form-hint">Standard bovine baseline (default: 6.50)</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Optimal Fresh Max (pH)</label>
+          <input type="number" step="0.05" name="ph_optimal_max" class="form-control mono" value="{{ thresholds.pH.optimal_max }}">
+          <div class="form-hint">Upper baseline (default: 6.80)</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Warning Low / Acidic (pH)</label>
+          <input type="number" step="0.05" name="ph_warning_low" class="form-control mono" value="{{ thresholds.pH.warning_low }}">
+          <div class="form-hint">Early lactic fermentation (default: 6.20)</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Critical Low / Curdled (pH)</label>
+          <input type="number" step="0.05" name="ph_critical_low" class="form-control mono" value="{{ thresholds.pH.critical_low }}">
+          <div class="form-hint">Curdling & protein breakdown (default: 5.90)</div>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Warning High / Alkaline (pH)</label>
+          <input type="number" step="0.05" name="ph_warning_high" class="form-control mono" value="{{ thresholds.pH.warning_high }}">
+          <div class="form-hint">Dilution or mild mastitis (default: 7.00)</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Critical High / Alkaline (pH)</label>
+          <input type="number" step="0.05" name="ph_critical_high" class="form-control mono" value="{{ thresholds.pH.critical_high }}">
+          <div class="form-hint">Chemical adulteration or severe mastitis (default: 7.30)</div>
+        </div>
+      </div>
+
+      <hr style="border: 0; border-top: 1px solid var(--border-subtle); margin: 1.25rem 0;">
+
+      <!-- Telemetry Sync Settings -->
+      <h4 style="font-size: 0.92rem; font-weight: 600; color: #0F172A; margin-bottom: 0.75rem;">
+        Firebase Polling & Path Settings
+      </h4>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label">Sync Poll Interval (Seconds)</label>
+          <input type="number" step="0.5" name="poll_interval" class="form-control mono" value="{{ local_settings.poll_interval or 3.0 }}">
+          <div class="form-hint">Rate at which server inspects Firebase for changes</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Stale Timeout (Seconds)</label>
+          <input type="number" step="1" name="stale_timeout" class="form-control mono" value="{{ local_settings.stale_timeout or 45 }}">
+          <div class="form-hint">Triggers sensor offline warning if no updates arrive</div>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">Database Path</label>
+        <input type="text" name="db_path" class="form-control mono" value="{{ conn_info.target_path }}">
+        <div class="form-hint">Current default path: <span class="mono">milk_monitor/current</span></div>
+      </div>
+
+      <div style="display: flex; gap: 0.75rem; margin-top: 1.5rem;">
+        <button type="submit" class="btn btn-primary">Save Settings</button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Diagnostics & Connection Information -->
+  <div class="form-card">
+    <h3 style="font-size: 1.15rem; font-weight: 700; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+      <i data-lucide="activity" style="color: var(--status-normal); width: 20px; height: 20px;"></i>
+      Connection Diagnostics
+    </h3>
+    <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 1.5rem;">
+      Live diagnostics from server-side Firebase connection.
+    </p>
+
+    <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.88rem;">
+      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        <div style="color: var(--text-muted); font-size: 0.75rem;">CONNECTION STATE</div>
+        <div style="font-weight: 700; margin-top: 0.2rem;" class="mono">
+          <span class="badge {% if conn_info.is_connected %}badge-normal{% else %}badge-critical{% endif %}">
+            {{ conn_info.status }}
+          </span>
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        <div style="color: var(--text-muted); font-size: 0.75rem;">STREAMING MODE</div>
+        <div style="font-weight: 600; margin-top: 0.2rem;">{{ conn_info.mode }}</div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        <div style="color: var(--text-muted); font-size: 0.75rem;">TARGET FIREBASE PROJECT ID</div>
+        <div class="mono" style="font-weight: 600; margin-top: 0.2rem;">{{ conn_info.project_id }}</div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        <div style="color: var(--text-muted); font-size: 0.75rem;">DATABASE ENDPOINT</div>
+        <div class="mono" style="font-size: 0.78rem; word-break: break-all; margin-top: 0.2rem;">
+          {{ conn_info.database_url }}
+        </div>
+      </div>
+
+      <div style="border-bottom: 1px solid var(--border-subtle); padding-bottom: 0.75rem;">
+        <div style="color: var(--text-muted); font-size: 0.75rem;">LAST SUCCESSFUL DATA INGESTION</div>
+        <div class="mono" style="font-size: 0.82rem; margin-top: 0.2rem;">
+          {{ conn_info.last_successful_fetch or 'None yet' }}
+          {% if conn_info.seconds_since_last_fetch is not none %}
+            <span style="color: var(--text-light);">({{ conn_info.seconds_since_last_fetch }}s ago)</span>
+          {% endif %}
+        </div>
+      </div>
+
+      {% if conn_info.error_message %}
+      <div style="background: var(--status-critical-bg); padding: 0.75rem; border-radius: var(--radius-sm); border: 1px solid var(--status-critical-border);">
+        <div style="color: var(--status-critical); font-weight: 600; font-size: 0.75rem;">LAST ERROR DIAGNOSTIC</div>
+        <div style="font-size: 0.8rem; color: #7F1D1D; margin-top: 0.25rem;">{{ conn_info.error_message }}</div>
+      </div>
+      {% endif %}
+
+      <div style="margin-top: 1rem;">
+        <form action="{{ url_for('settings.index') }}" method="POST" onsubmit="return confirm('Restore all threshold settings to default dairy science values?');">
+          <input type="hidden" name="action" value="reset_defaults">
+          <button type="submit" class="btn btn-outline btn-sm">Reset to Project Defaults</button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

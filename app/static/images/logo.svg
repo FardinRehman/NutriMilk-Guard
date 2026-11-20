@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 48 48" width="48" height="48" fill="none">
+  <!-- Outer Shield Path -->
+  <path d="M24 4L7 11V22C7 32.5 14.3 42.2 24 44.5C33.7 42.2 41 32.5 41 22V11L24 4Z" 
+        fill="#0284C7" fill-opacity="0.1" stroke="#0284C7" stroke-width="2.5" stroke-linejoin="round"/>
+  
+  <!-- Stylized Milk Drop Inside Shield -->
+  <path d="M24 13C24 13 16 23.5 16 28.5C16 32.9 19.6 36.5 24 36.5C28.4 36.5 32 32.9 32 28.5C32 23.5 24 13 24 13Z" 
+        fill="#0284C7"/>
+  
+  <!-- Milk Drop Highlight Reflection -->
+  <path d="M22 22C20.5 24 20 26.5 20 28.5" 
+        stroke="#FFFFFF" stroke-width="2" stroke-linecap="round"/>
+  
+  <!-- Guard Checkmark / Verification Accent -->
+  <path d="M21 28.5L23.5 31L28 26" 
+        stroke="#FFFFFF" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

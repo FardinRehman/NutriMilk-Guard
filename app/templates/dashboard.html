@@ -1,0 +1,140 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard | Nutri Milk Guard IoT{% endblock %}
+{% block page_heading %}Live Monitoring Dashboard{% endblock %}
+
+{% block content %}
+<!-- Overall Milk Quality Assessment Banner -->
+<section class="quality-banner {{ telemetry.overall_status | lower }}" id="overall-banner">
+  <div class="quality-info">
+    <h2>
+      <i data-lucide="shield-check" style="width: 22px; height: 22px;"></i>
+      Overall Milk Quality Assessment: 
+      <span id="overall-status-title">{{ telemetry.overall_status }}</span>
+    </h2>
+    <p id="overall-summary">{{ telemetry.overall_summary }}</p>
+    <p class="quality-disclaimer" id="overall-disclaimer">{{ telemetry.overall_disclaimer }}</p>
+  </div>
+
+  <div class="system-stats-grid">
+    <div class="stat-item">
+      <div class="stat-label">Sensors Reporting</div>
+      <div class="stat-value mono" id="stat-reporting-count">
+        {{ telemetry.sensors_reporting }} / {{ telemetry.sensors_configured }}
+      </div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-label">Active Alerts</div>
+      <div class="stat-value mono" style="color: {% if active_alert_count > 0 %}var(--status-critical){% else %}var(--status-normal){% endif %};" id="stat-active-alerts">
+        {{ active_alert_count }}
+      </div>
+    </div>
+
+    <div class="stat-item">
+      <div class="stat-label">Last ESP32 Ingestion</div>
+      <div class="stat-value mono" style="font-size: 0.85rem;" id="last-update-time">
+        {{ telemetry.timestamp or 'Awaiting Data' }}
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Sensor Cards Grid -->
+<section class="sensor-grid">
+  {% for key, sensor in telemetry.sensors.items() %}
+  <div class="sensor-card" id="card-{{ key }}">
+    <div class="card-header">
+      <div class="sensor-identity">
+        <div class="sensor-icon-wrapper">
+          <i data-lucide="{{ sensor.icon }}"></i>
+        </div>
+        <div>
+          <div class="sensor-name">{{ sensor.name }}</div>
+          <div class="sensor-id-tag mono">{{ sensor.id }}</div>
+        </div>
+      </div>
+
+      <span class="badge {{ sensor.badge_class }}" id="sensor-badge-{{ key }}">
+        {{ sensor.status }}
+      </span>
+    </div>
+
+    <div class="card-reading-block">
+      <span class="reading-value mono" id="sensor-val-{{ key }}">{{ sensor.formatted_value }}</span>
+      <span class="reading-unit">{{ sensor.unit }}</span>
+
+      <span class="reading-delta {{ sensor.delta_direction }}" id="sensor-delta-{{ key }}">
+        {% if sensor.delta is not none %}
+          {% if sensor.delta > 0 %}+{% endif %}{{ sensor.delta }} {{ sensor.unit }}
+        {% else %}
+          --
+        {% endif %}
+      </span>
+    </div>
+
+    <!-- Live Status / Threshold Diagnostic -->
+    <div class="card-footer">
+      <div class="threshold-desc mono" id="sensor-thresh-{{ key }}">
+        Applied: {{ sensor.threshold_applied }}
+      </div>
+      <div class="card-explanation" id="sensor-expl-{{ key }}">
+        {{ sensor.explanation }}
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</section>
+
+<!-- Live Graphs Section (Chart.js) -->
+<section class="charts-section">
+  <!-- Temperature Graph -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title" style="display: flex; align-items: center; gap: 0.5rem;">
+        <i data-lucide="thermometer" style="color: #0284C7; width: 18px; height: 18px;"></i>
+        <span>Milk Temperature Trend (°C)</span>
+      </div>
+
+      <div class="range-selector">
+        <button class="range-btn" data-range="15m">15m</button>
+        <button class="range-btn active" data-range="1h">1h</button>
+        <button class="range-btn" data-range="6h">6h</button>
+        <button class="range-btn" data-range="24h">24h</button>
+        <button class="range-btn" data-range="7d">7d</button>
+      </div>
+    </div>
+
+    <div class="chart-canvas-wrapper">
+      <canvas id="temp-chart-canvas"></canvas>
+    </div>
+  </div>
+
+  <!-- pH Graph -->
+  <div class="chart-card">
+    <div class="chart-header">
+      <div class="chart-title" style="display: flex; align-items: center; gap: 0.5rem;">
+        <i data-lucide="droplets" style="color: #16A34A; width: 18px; height: 18px;"></i>
+        <span>Milk pH Level Trend</span>
+      </div>
+
+      <div class="range-selector">
+        <button class="range-btn" data-range="15m">15m</button>
+        <button class="range-btn active" data-range="1h">1h</button>
+        <button class="range-btn" data-range="6h">6h</button>
+        <button class="range-btn" data-range="24h">24h</button>
+        <button class="range-btn" data-range="7d">7d</button>
+      </div>
+    </div>
+
+    <div class="chart-canvas-wrapper">
+      <canvas id="ph-chart-canvas"></canvas>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/charts.js') }}"></script>
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

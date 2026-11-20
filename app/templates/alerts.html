@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Alerts | Nutri Milk Guard{% endblock %}
+{% block page_heading %}Quality Violation Alerts{% endblock %}
+
+{% block content %}
+<div class="table-card">
+  <div class="table-header-bar">
+    <div>
+      <div class="table-title">Safety Threshold Alerts</div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+        Statefully deduplicated alert log based on scientific milk quality rules
+      </div>
+    </div>
+
+    <div class="table-controls">
+      <!-- Filter by status -->
+      <div class="range-selector">
+        <a href="{{ url_for('alerts.index', status='all', severity=severity_filter) }}" class="range-btn {% if status_filter == 'all' %}active{% endif %}">All</a>
+        <a href="{{ url_for('alerts.index', status='active', severity=severity_filter) }}" class="range-btn {% if status_filter == 'active' %}active{% endif %}">Active</a>
+        <a href="{{ url_for('alerts.index', status='resolved', severity=severity_filter) }}" class="range-btn {% if status_filter == 'resolved' %}active{% endif %}">Resolved</a>
+      </div>
+
+      <!-- Clear resolved button -->
+      <form action="{{ url_for('alerts.clear_resolved') }}" method="POST" style="margin: 0;">
+        <button type="submit" class="btn btn-outline btn-sm">Clear Resolved</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    {% if alerts and alerts | length > 0 %}
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Severity</th>
+          <th>Sensor</th>
+          <th>Initial / Latest Reading</th>
+          <th>Applied Threshold</th>
+          <th>Diagnostic Message</th>
+          <th>Triggered (UTC)</th>
+          <th>Recovery Time</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for alert in alerts %}
+        <tr>
+          <td>
+            <span class="badge {% if alert.severity == 'critical' %}badge-critical{% else %}badge-warning{% endif %}">
+              {{ alert.severity | upper }}
+            </span>
+          </td>
+          <td style="font-weight: 600;">{{ alert.sensor_name }}</td>
+          <td class="mono">
+            {{ alert.latest_reading }}
+            {% if alert.occurrence_count > 1 %}
+              <span style="font-size: 0.72rem; color: var(--text-light); margin-left: 0.2rem;">(x{{ alert.occurrence_count }})</span>
+            {% endif %}
+          </td>
+          <td class="mono" style="font-size: 0.78rem;">{{ alert.threshold }}</td>
+          <td style="font-size: 0.82rem; max-width: 280px;">{{ alert.message }}</td>
+          <td class="mono" style="font-size: 0.78rem;">{{ alert.timestamp }}</td>
+          <td class="mono" style="font-size: 0.78rem;">
+            {% if alert.status == 'resolved' %}
+              <span style="color: var(--status-normal);">Resolved: {{ alert.resolved_at }}</span>
+            {% else %}
+              <span style="color: var(--status-critical); font-weight: 600;">Active Condition</span>
+            {% endif %}
+          </td>
+          <td>
+            {% if not alert.acknowledged %}
+            <form action="{{ url_for('alerts.acknowledge', alert_id=alert.id) }}" method="POST" style="margin: 0;">
+              <button type="submit" class="btn btn-outline btn-sm" style="font-size: 0.72rem; padding: 0.2rem 0.5rem;">Ack</button>
+            </form>
+            {% else %}
+            <span style="font-size: 0.75rem; color: var(--text-light);">Acknowledged</span>
+            {% endif %}
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i data-lucide="check-circle-2" class="empty-icon" style="stroke: var(--status-normal);"></i>
+      <h3>No Active Alerts</h3>
+      <p>
+        All monitored milk parameters are either operating within normal thresholds or no violations have been triggered.
+      </p>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

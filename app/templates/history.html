@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+
+{% block title %}Sensor History | Nutri Milk Guard{% endblock %}
+{% block page_heading %}Sensor Reading History{% endblock %}
+
+{% block content %}
+<div class="table-card">
+  <div class="table-header-bar">
+    <div>
+      <div class="table-title">Historical Log Data</div>
+      <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 0.2rem;">
+        Server-side timestamped readings recorded from live ESP32 Firebase stream
+      </div>
+    </div>
+
+    <div class="table-controls">
+      <!-- Search -->
+      <input type="text" id="history-search" class="search-input" placeholder="Search timestamp or status...">
+
+      <!-- Range filter links -->
+      <div class="range-selector">
+        <a href="{{ url_for('history.index', range='15m') }}" class="range-btn {% if range_filter == '15m' %}active{% endif %}">15m</a>
+        <a href="{{ url_for('history.index', range='1h') }}" class="range-btn {% if range_filter == '1h' %}active{% endif %}">1h</a>
+        <a href="{{ url_for('history.index', range='6h') }}" class="range-btn {% if range_filter == '6h' %}active{% endif %}">6h</a>
+        <a href="{{ url_for('history.index', range='24h') }}" class="range-btn {% if range_filter == '24h' %}active{% endif %}">24h</a>
+        <a href="{{ url_for('history.index', range='all') }}" class="range-btn {% if range_filter == 'all' %}active{% endif %}">All</a>
+      </div>
+
+      <!-- CSV Export Button -->
+      <a href="{{ url_for('history.export') }}" class="btn btn-primary btn-sm" id="btn-export-csv">
+        <i data-lucide="download" style="width: 14px; height: 14px;"></i>
+        <span>Export CSV</span>
+      </a>
+    </div>
+  </div>
+
+  <div class="table-responsive">
+    {% if records and records | length > 0 %}
+    <table class="data-table" id="history-table">
+      <thead>
+        <tr>
+          <th>Recorded Timestamp (UTC)</th>
+          <th>Milk Temperature (°C)</th>
+          <th>Milk pH Level</th>
+          <th>Milk Volume (mL)</th>
+          <th>Assessed Quality Status</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for record in records | reverse %}
+        <tr>
+          <td class="mono" style="font-size: 0.82rem;">{{ record.timestamp }}</td>
+          <td class="mono">
+            {% if record.sensors.temperature_C and record.sensors.temperature_C.value is not none %}
+              <strong>{{ "%.2f" | format(record.sensors.temperature_C.value) }}</strong> °C
+            {% else %}
+              <span style="color: var(--text-light);">--</span>
+            {% endif %}
+          </td>
+          <td class="mono">
+            {% if record.sensors.pH and record.sensors.pH.value is not none %}
+              <strong>{{ "%.2f" | format(record.sensors.pH.value) }}</strong>
+            {% else %}
+              <span style="color: var(--text-light);">--</span>
+            {% endif %}
+          </td>
+          <td class="mono">
+            {% if record.sensors.milk_quantity_ml and record.sensors.milk_quantity_ml.value is not none %}
+              <strong>{{ "%.1f" | format(record.sensors.milk_quantity_ml.value) }}</strong> mL
+            {% else %}
+              <span style="color: var(--text-light);">--</span>
+            {% endif %}
+          </td>
+          <td>
+            <span class="badge {% if 'Normal' in record.overall_status %}badge-normal{% elif 'Warning' in record.overall_status %}badge-warning{% elif 'Critical' in record.overall_status %}badge-critical{% else %}badge-offline{% endif %}">
+              {{ record.overall_status }}
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i data-lucide="database" class="empty-icon"></i>
+      <h3>No Historical Records Accumulated Yet</h3>
+      <p>
+        The ESP32 microcontroller uploads the current reading to <span class="mono">milk_monitor/current</span>. 
+        As readings are received by this server, snapshots are indexed and preserved in session history.
+      </p>
+      <div style="font-size: 0.8rem; color: var(--brand-primary); font-weight: 500;">
+        Awaiting live ESP32 sensor broadcasts...
+      </div>
+    </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/history.js') }}"></script>
+{% endblock %}
